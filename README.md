@@ -2,6 +2,7 @@
 **Get your day together.**
 
 ## Ideas
+* Terminal greeter <-
 * Notes to self
 * What's next
   * Configurable (GH issues, PRs, etc.)
