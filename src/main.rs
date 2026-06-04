@@ -1,3 +1,5 @@
+use chrono::{Local, Timelike};
+use cutify::{ColorPalette, Cutifier, GradientDirection};
 use std::process::Command;
 
 fn get_text() -> Vec<String> {
@@ -31,39 +33,63 @@ fn get_text() -> Vec<String> {
 }
 
 fn main() {
-    let art_raw = r#"
-     _       _ _
-  __| | __ _(_) |_   _
- / _` |/ _` | | | | | |
-| (_| | (_| | | | |_| |
- \__,_|\__,_|_|_|\__, |
-                 |___/
-"#;
+    let hour: u32 = Local::now().hour();
+    if hour < 9 {
+        // Sunrise
+        Cutifier::new(
+            r#"
+⠀⠀⠀⠀⠀   ⠀⠀⠀⣀⣤⣴⣶⣶⣦⣤⣀⠀⠀⠀  ⠀⠀⠀⠀⠀⠀
+     ⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀   ⠀⠀⠀⠀
+⠀⠀⠀   ⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠀⠀   ⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠘⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠃⠀
+"#,
+        )
+        .palette(ColorPalette::Fire)
+        .direction(GradientDirection::Vertical)
+        .scale(7.0)
+        .print();
+    } else if hour > 19 {
+        // Sunset
+        Cutifier::new(
+            r#"
+⠀⠀⠀⠀⠀⠀  ⠀⠀⠀⣀⣤⣴⣶⣶⣦⣤⣀⠀⠀⠀  ⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀ ⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀ ⠀⠀⠀⠀
+⠀⠀⠀   ⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠀⠀   ⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠘⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠃⠀
+"#,
+        )
+        .palette(ColorPalette::Sunset)
+        .direction(GradientDirection::Vertical)
+        .scale(7.0)
+        .reverse()
+        .print();
+    } else {
+        // Midday
+        Cutifier::new(
+            r#"
+⠀⠀⠀⠀⠀⠀  ⠀⠀⠀⣀⣤⣴⣶⣶⣦⣤⣀
+⠀⠀⠀⠀ ⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄
+⠀⠀⠀   ⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆
+⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+        ⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀   ⠀⠀⠀
+         ⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋
+⠀⠀⠀⠀⠀⠀  ⠀⠀⠀⠉⠛⠻⠿⠿⠟⠛⠉
+"#,
+        )
+        .palette(ColorPalette::Fire)
+        .direction(GradientDirection::Diagonal)
+        .scale(10.0)
+        .print();
+    };
 
-    let mut text = get_text();
+    let text = get_text();
 
-    let mut art: Vec<&str> = art_raw.trim_matches('\n').lines().collect();
+    let offy: usize = 0;
 
-    let dispy = art.len().max(text.len());
-    let dispx = art.iter().map(|s| s.len()).max().unwrap();
-    let offy: i32 = 0;
-    let offx: i32 = 5;
-    let totalx = dispx + offx as usize;
-
-    text.resize(dispy, String::new());
-    art.resize(dispy, "");
-
-    if offy > 0 {
-        let mut pad = vec![String::new(); offy as usize];
-        pad.append(&mut text);
-        text = pad;
-    } else if offy < 0 {
-        let mut pad = vec![""; offy.unsigned_abs() as usize];
-        pad.append(&mut art);
-        text = pad.into_iter().map(str::to_owned).collect();
+    for _ in 0..offy {
+        println!();
     }
-
-    for i in 0..dispy {
-        println!("{:<totalx$}{}", art[i], text[i])
-    }
+    println!("{}", text.join("\n"))
 }
