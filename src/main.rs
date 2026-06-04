@@ -1,5 +1,5 @@
 use chrono::{Local, Timelike};
-use cutify::{Cutifier, GradientConfig, GradientDirection, HueRange, cuteprintln};
+use cutify::{ColorPalette, Cutifier, GradientConfig, GradientDirection, cuteprintln};
 use rand::seq::IndexedRandom;
 use std::process::Command;
 use text2art::{BasicFonts, Font, Printer};
@@ -10,49 +10,30 @@ fn get_theme() -> GradientConfig {
     if hour < 9 {
         // Sunrise
 
-        GradientConfig {
-            base_hue: Some(30.0),
-            hue_shift: 1.5,
-            step: 1.0,
-            hue_range: HueRange::Custom(30.0, 90.0),
-            direction: GradientDirection::Diagonal,
-            lightness: 85.0,
-            saturation: 85.0,
-            reverse: false,
-            scale: 50.0,
-        }
+        GradientConfig::default()
+            .palette(ColorPalette::Fire)
+            .direction(GradientDirection::Diagonal)
+            .scale(50.0)
     } else if hour > 20 {
         // Midday
 
-        GradientConfig {
-            base_hue: Some(30.0),
-            hue_shift: 1.5,
-            step: 1.0,
-            hue_range: HueRange::Oranges,
-            direction: GradientDirection::Diagonal,
-            lightness: 55.0,
-            saturation: 85.0,
-            reverse: false,
-            scale: 50.0,
-        }
+        GradientConfig::default()
+            .palette(ColorPalette::Fire)
+            .direction(GradientDirection::Vertical)
+            .scale(1.0)
+            .step(50.0)
     } else {
         // Sunset
 
-        GradientConfig {
-            base_hue: Some(60.0),
-            hue_shift: 3.0,
-            step: 1.0,
-            hue_range: HueRange::Custom(330.0, 90.0),
-            direction: GradientDirection::Vertical,
-            lightness: 85.0,
-            saturation: 85.0,
-            reverse: true,
-            scale: 50.0,
-        }
+        GradientConfig::default()
+            .palette(ColorPalette::Sunset)
+            .direction(GradientDirection::Diagonal)
+            .scale(50.0)
+            .reverse()
     }
 }
 
-fn print_head(theme: GradientConfig) {
+fn print_head(theme: &GradientConfig) {
     let hour: u32 = Local::now().hour();
     let font = match Font::from_basic(BasicFonts::Big) {
         Ok(font) => font,
@@ -61,7 +42,7 @@ fn print_head(theme: GradientConfig) {
     let printer = Printer::with_font(font);
     let curr_time = Local::now().format("%H:%M").to_string();
     let mut rng = rand::rng();
-    cutify::set_palette(theme);
+    cutify::set_gradient_config(theme.to_owned());
 
     if hour < 9 {
         // Sunrise
@@ -85,6 +66,7 @@ fn print_head(theme: GradientConfig) {
             Ok(str) => str,
             Err(_) => "Error rendering text".to_string(),
         };
+
         cuteprintln(&rdrd_head);
     } else if hour > 19 {
         // Sunset
@@ -106,6 +88,7 @@ fn print_head(theme: GradientConfig) {
             Ok(str) => str,
             Err(_) => "Error rendering text".to_string(),
         };
+
         cuteprintln(&rdrd_head);
     } else {
         // Midday
@@ -127,7 +110,12 @@ fn print_head(theme: GradientConfig) {
             Ok(str) => str,
             Err(_) => "Error rendering text".to_string(),
         };
-        cuteprintln(&rdrd_head);
+
+        for (i, l) in rdrd_head.lines().enumerate() {
+            let iter_theme = theme.clone().hue_shift(i as f32);
+            cutify::set_gradient_config(iter_theme);
+            cuteprintln(l);
+        }
     };
 }
 
@@ -163,7 +151,7 @@ fn get_repo_info() -> Vec<String> {
 
 fn main() {
     let theme = get_theme();
-    print_head(theme);
+    print_head(&theme);
     let text = get_repo_info();
 
     let offy: usize = 0;
