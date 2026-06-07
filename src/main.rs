@@ -1,117 +1,9 @@
 use chrono::{Local, Timelike};
-use cutify::{ColorPalette, Cutifier, GradientConfig, GradientDirection, cuteprintln};
-use rand::seq::IndexedRandom;
+use cutify::{ColorPalette, Cutifier, GradientDirection};
 use std::process::Command;
 use text2art::{BasicFonts, Font, Printer};
 
-fn get_theme() -> GradientConfig {
-    let hour: u32 = Local::now().hour();
-
-    if hour < 9 {
-        // Sunrise
-
-        GradientConfig::default()
-            .palette(ColorPalette::Fire)
-            .direction(GradientDirection::Diagonal)
-            .scale(50.0)
-    } else if hour > 20 {
-        // Midday
-
-        GradientConfig::default()
-            .palette(ColorPalette::Fire)
-            .direction(GradientDirection::Vertical)
-            .step(50.0)
-    } else {
-        // Sunset
-
-        GradientConfig::default()
-            .palette(ColorPalette::Sunset)
-            .direction(GradientDirection::Diagonal)
-            .scale(50.0)
-            .reverse()
-    }
-}
-
-fn print_head(theme: &GradientConfig) {
-    let hour: u32 = Local::now().hour();
-    let font = match Font::from_basic(BasicFonts::Big) {
-        Ok(font) => font,
-        Err(_) => panic!("Failed to load font"),
-    };
-    let printer = Printer::with_font(font);
-    let curr_time = Local::now().format("%H:%M").to_string();
-    let mut rng = rand::rng();
-
-    if hour < 9 {
-        // Sunrise
-
-        let mut disp_head = [
-            "Welcome back.",
-            "Let's start on the right foot.",
-            "Good morning!",
-            "Let's get started.",
-            "Ready when you are.",
-            "Up bright and early!",
-        ]
-        .choose(&mut rng)
-        .copied()
-        .unwrap_or("Good morning!")
-        .to_string();
-
-        disp_head.push_str(&format!("\nIt's {}.", curr_time));
-
-        let rdrd_head = match printer.render_text(&disp_head) {
-            Ok(str) => str,
-            Err(_) => "Error rendering text".to_string(),
-        };
-
-        cuteprintln(&rdrd_head);
-    } else if hour > 19 {
-        // Sunset
-
-        let mut disp_head = [
-            "Good evening!",
-            "Ready for sundown?",
-            "Let's get this done.",
-            "Finish off the day.",
-        ]
-        .choose(&mut rng)
-        .copied()
-        .unwrap_or("Ending off strong!")
-        .to_string();
-
-        disp_head.push_str(&format!("\nIt's {}.", curr_time));
-
-        let rdrd_head = match printer.render_text(&disp_head) {
-            Ok(str) => str,
-            Err(_) => "Error rendering text".to_string(),
-        };
-
-        cuteprintln(&rdrd_head);
-    } else {
-        // Midday
-
-        let mut disp_head = [
-            "Keep powering through.",
-            "I'm just getting warmed up!",
-            "Still at it, boss.",
-            "I don't need a lunch break.",
-        ]
-        .choose(&mut rng)
-        .copied()
-        .unwrap_or("Keep powering through.")
-        .to_string();
-
-        disp_head.push_str(&format!("\nIt's {}.", curr_time));
-
-        let rdrd_head = match printer.render_text(&disp_head) {
-            Ok(str) => str,
-            Err(_) => "Error rendering text".to_string(),
-        };
-    };
-}
-
-fn get_repo_info() -> Vec<String> {
+fn get_text() -> Vec<String> {
     let mut outvec: Vec<u8> = {
         Command::new("sh")
             .arg("-c")
@@ -141,15 +33,117 @@ fn get_repo_info() -> Vec<String> {
     text
 }
 
+fn zip_art_time(art: &str, rd_time: &str) -> String {
+    let art = art.to_string();
+    let art_lines: Vec<&str> = art.lines().collect();
+    let time_lines: Vec<&str> = rd_time.lines().collect();
+    let y = art_lines.len().max(time_lines.len());
+
+    (0..y)
+        .map(|i| {
+            format!(
+                "{:<30}{}\n",
+                art_lines.get(i).unwrap_or(&""),
+                time_lines.get(i).unwrap_or(&"")
+            )
+        })
+        .collect()
+}
+
 fn main() {
-    let theme = get_theme();
-    print_head(&theme);
-    let text = get_repo_info();
+    let hour: u32 = Local::now().hour();
+    let font = match Font::from_basic(BasicFonts::Big) {
+        Ok(font) => font,
+        Err(_) => panic!("Failed to load font."),
+    };
+    let prtr = Printer::with_font(font);
+    let curr_time = Local::now().format("%H:%M").to_string();
+    let mut rdrd_time = match prtr.render_text(&curr_time) {
+        Ok(str) => str,
+        Err(_) => "Error rendering time".to_string(),
+    };
+    rdrd_time.insert(0, '\n');
+
+    if true {
+        // Sunrise
+        let head: String = r#"
+
+
+⠀⠀⠀⠀⠀   ⠀⠀⠀⣀⣤⣴⣶⣶⣦⣤⣀
+     ⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄
+⠀⠀⠀   ⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆
+⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⠀⠘⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠃"#
+            .to_string();
+
+        let shift = 8.0;
+        let mut buf = Vec::new();
+
+        for (i, l) in zip_art_time(&head, &rdrd_time).lines().enumerate() {
+            let cur_base = (i as f32 * shift) + 40.0;
+
+            Cutifier::new(l.replace("\n", ""))
+                .palette(ColorPalette::Fire)
+                .direction(GradientDirection::Vertical)
+                .base_hue(cur_base)
+                .write_to(&mut buf)
+                .unwrap();
+        }
+        let prt = String::from_utf8(buf).unwrap().replace("\n\n", "");
+        print!("{}", prt);
+    } else if hour < 20 {
+        // Midday
+        let head: String = r#"
+      ⠀⠀⠀⣀⣤⣴⣶⣶⣦⣤⣀
+      ⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄
+      ⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆
+      ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+      ⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇
+       ⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋
+      ⠀⠀⠀⠉⠛⠻⠿⠿⠟⠛⠉"#
+            .to_string();
+
+        Cutifier::new(zip_art_time(&head, &rdrd_time))
+            .palette(ColorPalette::Fire)
+            .direction(GradientDirection::Diagonal)
+            .scale(10.0)
+            .print();
+    } else {
+        // Sunset
+        let head: String = r#"
+
+
+⠀⠀⠀⠀⠀⠀  ⠀⠀⠀⣀⣤⣴⣶⣶⣦⣤⣀
+⠀⠀⠀⠀ ⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄
+⠀⠀⠀   ⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆
+⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⠀⠘⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠃"#
+            .to_string();
+
+        let shift = 15.0;
+        let mut buf = Vec::new();
+
+        for (i, l) in zip_art_time(&head, &rdrd_time).lines().enumerate() {
+            let cur_base = (i as f32 * shift) + 40.0;
+
+            Cutifier::new(l.replace("\n", ""))
+                .palette(ColorPalette::Sunset)
+                .direction(GradientDirection::Vertical)
+                .base_hue(cur_base)
+                .reverse()
+                .write_to(&mut buf)
+                .unwrap();
+        }
+        let prt = String::from_utf8(buf).unwrap().replace("\n\n", "");
+        print!("{}", prt);
+    };
+
+    let text = get_text();
 
     let offy: usize = 0;
 
     for _ in 0..offy {
         println!();
     }
-    println!("{} {}", Cutifier::new("╠"), text.join("\n"))
+    println!("{}", text.join("\n"))
 }
