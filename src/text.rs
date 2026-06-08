@@ -19,8 +19,12 @@ fn get_git() -> Vec<String> {
         .expect("Failed to execute command")
         .stdout;
     let git_stat = format!("Status:\n{}", String::from_utf8(buf).unwrap().trim());
+    let mut git = vec![git_branch];
+    if git_stat != "Status:\n" {
+        git.push(git_stat);
+    }
 
-    vec![git_branch, git_stat]
+    git
 }
 
 fn get_sysinfo() -> Vec<String> {
@@ -75,16 +79,17 @@ fn fmt_text(text_cols: &Vec<Vec<String>>, max_x: usize, max_y: usize) -> String 
 
     for text_col in text_cols {
         let mut col: Vec<String> = Vec::new();
+        let pad = col_width - 1;
+        let bottom_pad = col_width + 1;
 
         for section in text_col {
             for (i, line) in section.lines().enumerate() {
                 let box_char = if i == 0 { "╠" } else { "║" };
-                let pad = col_width - 1;
                 col.push(format!("{} {:<pad$}", box_char, line))
             }
         }
 
-        col.push("╚".to_string());
+        col.push(format!("{:<bottom_pad$}", "╚".to_string()));
         cols.push(col);
     }
 
