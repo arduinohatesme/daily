@@ -19,7 +19,7 @@ fn zip_art_time(art: &str, rd_time: &str) -> String {
         .collect()
 }
 
-fn write_sunrise(rdrd_time: &str) -> String {
+fn write_sunrise(rdrd_time: &str) -> (String, f32, ColorPalette) {
     let mut buf: Vec<u8> = Vec::new();
     let head: String = r#"
 
@@ -31,25 +31,30 @@ fn write_sunrise(rdrd_time: &str) -> String {
         .to_string();
 
     let shift = 8.0;
-
-    for (i, l) in zip_art_time(&head, rdrd_time).lines().enumerate() {
-        let cur_base = (i as f32 * shift) + 40.0;
+    let mut cur_base = 40.0;
+    let palette = ColorPalette::Fire;
+    for l in zip_art_time(&head, rdrd_time).lines() {
+        cur_base += shift;
 
         Cutifier::new(l.replace("\n", ""))
-            .palette(ColorPalette::Fire)
+            .palette(palette)
             .direction(GradientDirection::Vertical)
             .base_hue(cur_base)
             .write_to(&mut buf)
             .unwrap();
     }
-    String::from_utf8(buf)
-        .unwrap()
-        .replace("\n\n", "")
-        .trim_end()
-        .to_string()
+    (
+        String::from_utf8(buf)
+            .unwrap()
+            .replace("\n\n", "")
+            .trim_end()
+            .to_string(),
+        cur_base + shift,
+        palette,
+    )
 }
 
-fn write_midday(rdrd_time: &str) -> String {
+fn write_midday(rdrd_time: &str) -> (String, f32, ColorPalette) {
     let mut buf: Vec<u8> = Vec::new();
     let head: String = r#"
       ⠀⠀⠀⣀⣤⣴⣶⣶⣦⣤⣀
@@ -63,21 +68,26 @@ fn write_midday(rdrd_time: &str) -> String {
     .to_string();
 
     let shift = 9.0;
-
-    for (i, l) in zip_art_time(&head, rdrd_time).lines().enumerate() {
-        let cur_base = (i as f32 * shift) + 40.0;
+    let mut cur_base = 40.0;
+    let palette = ColorPalette::Fire;
+    for l in zip_art_time(&head, rdrd_time).lines() {
+        cur_base += shift;
 
         Cutifier::new(l.replace("\n", ""))
-            .palette(ColorPalette::Fire)
+            .palette(palette)
             .direction(GradientDirection::Vertical)
             .base_hue(cur_base)
             .write_to(&mut buf)
             .unwrap();
     }
-    String::from_utf8(buf).unwrap().replace("\n\n", "")
+    (
+        String::from_utf8(buf).unwrap().replace("\n\n", ""),
+        cur_base + shift,
+        palette,
+    )
 }
 
-fn write_sunset(rdrd_time: &str) -> String {
+fn write_sunset(rdrd_time: &str) -> (String, f32, ColorPalette) {
     let mut buf: Vec<u8> = Vec::new();
     let head: String = r#"
 
@@ -89,26 +99,31 @@ fn write_sunset(rdrd_time: &str) -> String {
         .to_string();
 
     let shift = 15.0;
-
-    for (i, l) in zip_art_time(&head, rdrd_time).lines().enumerate() {
-        let cur_base = (i as f32 * shift) + 40.0;
+    let mut cur_base = 40.0;
+    let palette = ColorPalette::Sunset;
+    for l in zip_art_time(&head, rdrd_time).lines() {
+        cur_base += shift;
 
         Cutifier::new(l.replace("\n", ""))
-            .palette(ColorPalette::Sunset)
+            .palette(palette)
             .direction(GradientDirection::Vertical)
             .base_hue(cur_base)
             .reverse()
             .write_to(&mut buf)
             .unwrap();
     }
-    String::from_utf8(buf)
-        .unwrap()
-        .replace("\n\n", "")
-        .trim_end()
-        .to_string()
+    (
+        String::from_utf8(buf)
+            .unwrap()
+            .replace("\n\n", "")
+            .trim_end()
+            .to_string(),
+        cur_base + shift,
+        palette,
+    )
 }
 
-pub fn get_head() -> String {
+pub fn get_head() -> (String, f32, ColorPalette) {
     let hour: u32 = Local::now().hour();
     let font = match Font::from_basic(BasicFonts::Big) {
         Ok(font) => font,

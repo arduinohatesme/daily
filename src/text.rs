@@ -42,9 +42,9 @@ fn divider(text: &[Vec<String>], x: usize) -> String {
     res
 }
 
-fn fmt_text(text_cols: &Vec<Vec<String>>, x: usize, y: usize) -> String {
+fn fmt_text(text_cols: &Vec<Vec<String>>, max_x: usize, max_y: usize) -> String {
     let mut cols: Vec<Vec<String>> = Vec::new();
-    let col_width = (x / text_cols.len()) - 1;
+    let col_width = (max_x / text_cols.len()) - 1;
 
     for text_col in text_cols {
         let mut col: Vec<String> = Vec::new();
@@ -72,7 +72,8 @@ fn fmt_text(text_cols: &Vec<Vec<String>>, x: usize, y: usize) -> String {
         })
         .collect::<Vec<String>>()
         .join("\n");
-    res_str.insert_str(0, &divider(&cols, x));
+
+    res_str.insert_str(0, &divider(&cols, max_x));
     res_str
 }
 
