@@ -19,7 +19,7 @@ fn zip_art_time(art: &str, rd_time: &str) -> String {
         .collect()
 }
 
-fn write_sunrise(rdrd_time: &str) -> Vec<u8> {
+fn write_sunrise(rdrd_time: &str) -> String {
     let mut buf: Vec<u8> = Vec::new();
     let head: String = r#"
 
@@ -42,10 +42,14 @@ fn write_sunrise(rdrd_time: &str) -> Vec<u8> {
             .write_to(&mut buf)
             .unwrap();
     }
-    buf
+    String::from_utf8(buf)
+        .unwrap()
+        .replace("\n\n", "")
+        .trim_end()
+        .to_string()
 }
 
-fn write_midday(rdrd_time: &str) -> Vec<u8> {
+fn write_midday(rdrd_time: &str) -> String {
     let mut buf: Vec<u8> = Vec::new();
     let head: String = r#"
       ⠀⠀⠀⣀⣤⣴⣶⣶⣦⣤⣀
@@ -70,10 +74,10 @@ fn write_midday(rdrd_time: &str) -> Vec<u8> {
             .write_to(&mut buf)
             .unwrap();
     }
-    buf
+    String::from_utf8(buf).unwrap().replace("\n\n", "")
 }
 
-fn write_sunset(rdrd_time: &str) -> Vec<u8> {
+fn write_sunset(rdrd_time: &str) -> String {
     let mut buf: Vec<u8> = Vec::new();
     let head: String = r#"
 
@@ -97,7 +101,11 @@ fn write_sunset(rdrd_time: &str) -> Vec<u8> {
             .write_to(&mut buf)
             .unwrap();
     }
-    buf
+    String::from_utf8(buf)
+        .unwrap()
+        .replace("\n\n", "")
+        .trim_end()
+        .to_string()
 }
 
 pub fn get_head() -> String {
@@ -114,11 +122,9 @@ pub fn get_head() -> String {
     };
     rdrd_time.insert(0, '\n');
 
-    let buf = match hour {
+    match hour {
         0..9 => write_sunrise(&rdrd_time),
         9..20 => write_midday(&rdrd_time),
         _ => write_sunset(&rdrd_time),
-    };
-
-    String::from_utf8(buf).unwrap().replace("\n\n", "")
+    }
 }
