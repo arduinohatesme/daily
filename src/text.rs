@@ -1,36 +1,63 @@
 use std::path::Path;
 use std::process::Command;
+use std::time::Duration;
+use systemstat::{Platform, System};
 
 fn get_git() -> Vec<String> {
-    fn get_branch() -> String {
-        let buf = Command::new("sh")
-            .arg("-c")
-            .arg("git rev-parse --abbrev-ref HEAD")
-            .output()
-            .expect("Failed to execute command")
-            .stdout;
-        let mut res = String::from_utf8(buf).unwrap().trim().to_string();
-        res.insert_str(0, "Branch: ");
-        res
-    }
+    let buf = Command::new("sh")
+        .arg("-c")
+        .arg("git rev-parse --abbrev-ref HEAD")
+        .output()
+        .expect("Failed to execute command")
+        .stdout;
+    let git_branch = format!("Branch: {}", String::from_utf8(buf).unwrap().trim());
 
-    fn get_stat() -> String {
-        let buf = Command::new("sh")
-            .arg("-c")
-            .arg("git status --porcelain")
-            .output()
-            .expect("Failed to execute command")
-            .stdout;
-        let mut stat = String::from_utf8(buf).unwrap().trim().to_string();
-        if stat.trim().is_empty() {
-            "".to_string()
-        } else {
-            stat.insert_str(0, "Status:\n");
-            stat
+    let buf = Command::new("sh")
+        .arg("-c")
+        .arg("git status --porcelain")
+        .output()
+        .expect("Failed to execute command")
+        .stdout;
+    let git_stat = format!("Status:\n{}", String::from_utf8(buf).unwrap().trim());
+
+    vec![git_branch, git_stat]
+}
+
+fn get_sysinfo() -> Vec<String> {
+    let sys = System::new();
+
+    fn fmt_uptime(uptime: Duration) -> String {
+        let mins = uptime.as_secs() / 60;
+        let hrs = mins / 60;
+        let days = hrs / 24;
+
+        if days != 0 && hrs != 0 {
+            return format!("Uptime: {:02}:{:02}:{:02}", days, hrs, mins);
+        } else if hrs != 0 {
+            return format!("Uptime: {:02}:{:02}", hrs, mins);
         }
+        format!("Uptime: {}m", mins)
     }
 
-    vec![get_branch(), get_stat()]
+    let uptime = match sys.uptime() {
+        Ok(uptime) => fmt_uptime(uptime),
+        Err(_) => "Error getting uptime".to_string(),
+    };
+
+    let cpu_load = match sys.cpu_load_aggregate() {
+        Ok(cpu) => {
+            let cpu = cpu.done().unwrap();
+            format!("CPU Usage: {}%", cpu.system * 100.0)
+        }
+        Err(_) => "Error getting cpu usage".to_string(),
+    };
+
+    let cpu_temp = match sys.cpu_temp() {
+        Ok(temp) => format!("CPU Temp (C): {}", temp),
+        Err(_) => "Error getting cpu temp".to_string(),
+    };
+
+    vec![uptime, cpu_load, cpu_temp]
 }
 
 fn divider(text: &[Vec<String>], x: usize) -> String {
@@ -52,7 +79,8 @@ fn fmt_text(text_cols: &Vec<Vec<String>>, max_x: usize, max_y: usize) -> String 
         for section in text_col {
             for (i, line) in section.lines().enumerate() {
                 let box_char = if i == 0 { "╠" } else { "║" };
-                col.push(format!("{} {:<col_width$}", box_char, line))
+                let pad = col_width - 1;
+                col.push(format!("{} {:<pad$}", box_char, line))
             }
         }
 
@@ -82,5 +110,6 @@ pub fn get_text(x: usize, y: usize) -> String {
     if Path::exists(Path::new("./.git")) {
         cols.push(get_git());
     }
+    cols.push(get_sysinfo());
     fmt_text(&cols, x, y)
 }
