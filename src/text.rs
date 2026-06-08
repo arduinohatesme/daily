@@ -76,11 +76,11 @@ fn divider(text: &[Vec<String>], x: usize) -> String {
 fn fmt_text(text_cols: &Vec<Vec<String>>, max_x: usize, max_y: usize) -> String {
     let mut cols: Vec<Vec<String>> = Vec::new();
     let col_width = (max_x / text_cols.len()) - 1;
+    let pad = col_width - 1;
+    let bottom_pad = col_width + 1;
 
     for text_col in text_cols {
         let mut col: Vec<String> = Vec::new();
-        let pad = col_width - 1;
-        let bottom_pad = col_width + 1;
 
         for section in text_col {
             for (i, line) in section.lines().enumerate() {
@@ -96,18 +96,24 @@ fn fmt_text(text_cols: &Vec<Vec<String>>, max_x: usize, max_y: usize) -> String 
     let max_rows = cols.iter().map(|c| c.len()).max().unwrap_or(0);
     let col_ct = cols.len();
 
-    let mut res_str = (0..max_rows)
+    let res_vec = (0..max_rows)
         .map(|i| {
             (0..col_ct)
                 .map(|j| cols[j].get(i).cloned().unwrap_or_default())
                 .collect::<Vec<String>>()
-                .join("")
         })
-        .collect::<Vec<String>>()
-        .join("\n");
+        .collect::<Vec<Vec<String>>>();
 
-    res_str.insert_str(0, &divider(&cols, max_x));
-    res_str
+    let mut res = String::new();
+    for row in res_vec {
+        for col in row {
+            res.push_str(&format!("{:<bottom_pad$}", col));
+        }
+        res.push('\n');
+    }
+
+    res.insert_str(0, &divider(&cols, max_x));
+    res
 }
 
 pub fn get_text(x: usize, y: usize) -> String {
