@@ -81,9 +81,14 @@ fn fmt_text(text_cols: &Vec<Vec<String>>, max_x: usize, max_y: usize) -> String 
 
     for text_col in text_cols {
         let mut col: Vec<String> = Vec::new();
+        let mut cur_height = 0;
 
         for section in text_col {
             for (i, line) in section.lines().enumerate() {
+                if cur_height >= max_y && max_y != 0 {
+                    break;
+                };
+                cur_height += 1;
                 let box_char = if i == 0 { "╠" } else { "║" };
                 col.push(format!("{} {:<pad$}", box_char, line))
             }

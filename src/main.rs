@@ -4,7 +4,7 @@ mod text;
 
 fn main() {
     let (head, text_col, palette) = head::get_head();
-    let text = text::get_text(70, 20);
+    let text = text::get_text(70, 0); // 0 = infinite
     let mut buf = Vec::new();
     Cutifier::new(text)
         .palette(palette)
