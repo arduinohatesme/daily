@@ -112,7 +112,10 @@ fn fmt_text(text_cols: &Vec<Vec<String>>, max_x: usize, max_y: usize) -> String 
     let mut res = String::new();
     for row in res_vec {
         for col in row {
-            res.push_str(&format!("{:<bottom_pad$}", col));
+            res.push_str(&match col.char_indices().nth(bottom_pad) {
+                Some((idx, _)) => format!("{}... ", &col[..idx - 4]),
+                None => col.to_string(),
+            });
         }
         res.push('\n');
     }
