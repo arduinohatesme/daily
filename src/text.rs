@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::process::Command;
-use std::time::Duration;
-use systemstat::{Platform, System};
+use std::thread::sleep;
+use sysinfo::{CpuRefreshKind, Disks, MINIMUM_CPU_UPDATE_INTERVAL, RefreshKind, System};
 
 fn get_git() -> Vec<String> {
     let buf = Command::new("sh")
@@ -28,40 +28,40 @@ fn get_git() -> Vec<String> {
 }
 
 fn get_sysinfo() -> Vec<String> {
-    let sys = System::new();
+    let mut sys =
+        System::new_with_specifics(RefreshKind::nothing().with_cpu(CpuRefreshKind::everything()));
+    sleep(MINIMUM_CPU_UPDATE_INTERVAL);
+    sys.refresh_all();
 
-    fn fmt_uptime(uptime: Duration) -> String {
-        let mins = uptime.as_secs() / 60;
-        let hrs = mins / 60;
-        let days = hrs / 24;
+    let cpu_loads = sys.cpus().iter().map(|c| c.cpu_usage());
+    let (load_sum, load_ct) = cpu_loads
+        .clone()
+        .fold((0.0, 0), |(s, c), val| (s + val, c + 1));
+    let cpu_load_avg = load_sum / load_ct as f32;
+    let cpu_load = format!(
+        "CPU Usage:
+Min: {:.2}%
+Avg: {:.2}%
+Max: {:.2}%
+",
+        cpu_loads.clone().reduce(f32::min).unwrap_or(0.0),
+        cpu_load_avg,
+        cpu_loads.reduce(f32::max).unwrap_or(0.0),
+    );
 
-        if days != 0 && hrs != 0 {
-            return format!("Uptime: {:02}:{:02}:{:02}", days, hrs, mins);
-        } else if hrs != 0 {
-            return format!("Uptime: {:02}:{:02}", hrs, mins);
-        }
-        format!("Uptime: {}m", mins)
-    }
+    let memory = format!(
+        "RAM: {:.2}GB/{:.2}GB",
+        sys.free_memory() as f32 / (1024.0 * 1024.0 * 1024.0),
+        sys.total_memory() as f32 / (1024.0 * 1024.0 * 1024.0)
+    );
 
-    let uptime = match sys.uptime() {
-        Ok(uptime) => fmt_uptime(uptime),
-        Err(_) => "Error getting uptime".to_string(),
-    };
+    let disks = Disks::new_with_refreshed_list();
+    let disk_usage = format!(
+        "Disk Usage: {:.3}%",
+        disks[0].usage().total_written_bytes as f32 / disks[0].total_space() as f32,
+    );
 
-    let cpu_load = match sys.cpu_load_aggregate() {
-        Ok(cpu) => {
-            let cpu = cpu.done().unwrap();
-            format!("CPU Usage: {}%", cpu.system * 100.0)
-        }
-        Err(_) => "Error getting cpu usage".to_string(),
-    };
-
-    let cpu_temp = match sys.cpu_temp() {
-        Ok(temp) => format!("CPU Temp (C): {}", temp),
-        Err(_) => "Error getting cpu temp".to_string(),
-    };
-
-    vec![uptime, cpu_load, cpu_temp]
+    vec![memory, cpu_load, disk_usage]
 }
 
 fn divider(text: &[Vec<String>], x: usize) -> String {
@@ -114,7 +114,7 @@ fn fmt_text(text_cols: &Vec<Vec<String>>, max_x: usize, max_y: usize) -> String 
         for col in row {
             res.push_str(&match col.char_indices().nth(bottom_pad) {
                 Some((idx, _)) => format!("{}... ", &col[..idx - 4]),
-                None => col.to_string(),
+                None => format!("{:<bottom_pad$}", col),
             });
         }
         res.push('\n');
